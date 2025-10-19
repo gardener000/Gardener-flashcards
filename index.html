@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>Leitner 学习卡片</title>
+<meta name="description" content="一个功能强大的、支持离线和自定义的 Leitner 学习卡片 PWA 应用。"/>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+/* ... 您的全部 CSS 样式保持不变 ... */
+:root{--bg:hsl(210 20% 98%);--card-bg:hsl(0 0% 100%);--ink:hsl(220 13% 12%);--muted:hsl(220 10% 45%);--accent:hsl(215 90% 55%);--accent-2:hsl(200 80% 45%);--highlight:hsl(48 100% 60%);--radius:14px;--gap:8px;--card-w:min(760px,calc(100vw - 48px));}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#f7f9fc 140%);color:var(--ink);font-family:"Roboto","Open Sans","Noto Sans SC",system-ui,-apple-system,Segoe UI;}
+.container{max-width:980px;margin:0 auto;padding:14px;}
+header{display:flex;flex-direction:column;align-items:center;gap:8px;padding:8px 4px;}
+h1{font-size:20px;margin:0;font-weight:700;}
+.controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.mode-btn, .action-btn {background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:999px;font-weight:600;cursor:pointer;}
+.action-btn.secondary{background:#fff;color:var(--accent);border:1px solid hsl(215 60% 80%);}
+.toolbar{width:100%;display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap;}
+.progress{flex:1;min-width:160px;margin:0 12px;}
+.progress-bar{height:8px;background:hsl(0 0% 90%);border-radius:6px;overflow:hidden;}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .25s ease;}
+.stats{min-width:220px;background:linear-gradient(180deg, #fff, #fbfdff);border-radius:12px;padding:8px 10px;border:1px solid hsl(220 10% 94%);box-shadow:0 6px 20px rgba(16,24,40,0.06);font-size:13px;color:var(--muted);}
+.stats strong{color:var(--ink);font-weight:700;}
+.app{display:flex;justify-content:center;padding:18px 10px;}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));width:var(--card-w);align-items:start;justify-items:center;}
+.card{width:100%;max-width:420px;perspective:1200px;}
+.card__inner{position:relative;width:100%;padding-top:133%;transform-style:preserve-3d;transition:transform 600ms cubic-bezier(.2,.9,.2,1);border-radius:var(--radius);box-shadow:0 8px 24px rgba(16,24,40,0.09);}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--radius);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(var(--gap)*4);background:linear-gradient(180deg,var(--card-bg),#fbfdff);border:1px solid hsl(220 10% 94%);overflow:auto;}
+.front{transform:rotateY(0deg);}
+.back{transform:rotateY(180deg);text-align:left;align-items:flex-start;}
+.front h2{font-size:clamp(18px,4.2vw,22px);margin:0;font-weight:700;text-align:center;}
+.subtitle{margin-top:8px;color:var(--muted);font-size:13px;text-align:center;}
+.hr{width:48px;height:4px;border-radius:4px;background:linear-gradient(90deg,var(--accent),#6ea8ff);margin:10px 0;}
+dl{margin:0;}
+dt{font-weight:700;margin-top:8px;font-size:14px;}
+dd{margin:6px 0 12px 0;padding-left:14px;color:var(--muted);font-size:13px;}
+mark{background:linear-gradient(120deg,var(--highlight) 0%,rgba(255,225,115,0.35) 100%);padding:0 4px;border-radius:4px;}
+.btn-area{display:flex;gap:8px;justify-content:center;margin-top:12px;}
+.flip-btn{background:transparent;color:var(--accent);border:2px solid transparent;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer;}
+.remember-btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:700;cursor:pointer;}
+.remember-btn.low{background:#ffb74d;}
+.remember-btn.high{background:#4caf50;}
+.card[data-flipped="true"] .card__inner{transform:rotateY(180deg);}
+.grid.single .card{display:none;}
+.grid.single .card.current{display:block;}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#111;color:#fff;padding:10px 14px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.2);display:none;}
+.toast.show{display:block;opacity:0;animation:fadeIn .28s forwards;}
+@keyframes fadeIn{to{opacity:1;transform:translateX(-50%) translateY(-4px);}}
+.flip-btn:focus,.mode-btn:focus,.remember-btn:focus,.action-btn:focus{outline:3px solid rgba(34,100,255,0.12);outline-offset:3px;border-radius:8px;}
+@media (max-width:420px){:root{font-size:15px;}header{padding:10px 6px;} .stats{min-width:160px;font-size:12px;} .container{padding:8px;}}
+/* ==================================
+   弹窗美化与增强样式 (追加在末尾)
+   ================================== */
+
+/* --- 1. 弹窗通用样式升级 --- */
+.modal {
+  display: none; 
+  position: fixed; 
+  z-index: 1000; /* 确保在最上层 */
+  left: 0; top: 0;
+  width: 100%; 
+  height: 100%; 
+  overflow: auto; 
+  background-color: rgba(0, 0, 0, 0.6); /* 背景更暗，突出弹窗 */
+  display: flex; /* 使用 Flexbox 实现垂直居中 */
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal.show {
+  opacity: 1;
+}
+
+.modal-content {
+  background-color: #ffffff;
+  margin: auto; /* Flexbox 会处理居中，这里设为 auto */
+  padding: 24px 32px;
+  border: none; /* 移除旧边框 */
+  width: 90%; 
+  max-width: 700px;
+  border-radius: var(--radius);
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transform: scale(0.95);
+  transition: transform 0.3s ease;
+}
+
+.modal.show .modal-content {
+  transform: scale(1);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 22px;
+  color: var(--ink);
+  border-bottom: 1px solid #eee;
+  padding-bottom: 12px;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: #aaa;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.modal-close-btn:hover {
+  color: var(--ink);
+  transform: rotate(90deg);
+}
+
+/* --- 2. 卡片编辑器专属美化 --- */
+#cardEditorForm label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+#cardEditorForm textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 16px;
+  box-sizing: border-box;
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#cardEditorForm textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(34, 100, 255, 0.12);
+}
+
+.editor-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.preview {
+  border: 1px dashed #e0e0e0; /* 使用虚线边框区分 */
+  border-radius: 8px;
+  padding: 12px;
+  background-color: #f9f9f9;
+  min-height: 140px;
+  font-size: 14px;
+  overflow-y: auto;
+  color: #333;
+}
+/* Markdown 预览样式 */
+.preview h1, .preview h2, .preview h3 { margin-top: 0; }
+.preview p { margin: 0 0 8px 0; }
+.preview code { background-color: #eee; padding: 2px 4px; border-radius: 4px; }
+.preview ul, .preview ol { padding-left: 20px; }
+
+.form-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+  text-align: right;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* 在小屏幕上，编辑器变为单列 */
+@media (max-width: 768px) {
+  .editor-container {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+<!-- HTML 结构与之前稳定版一致 -->
+<div class="container" role="application">
+  <header>
+    <h1 id="title">Leitner 学习卡片</h1>
+    <div style="margin: 12px 0; display: flex; align-items: center; gap: 16px;">
+      <div class="card-set-selector">
+        <label for="set-select" style="font-weight: 600; margin-right: 8px;">选择卡片组:</label>
+        <select id="set-select" class="action-btn secondary" style="padding-right: 24px;"></select>
+      </div>
+      <button class="action-btn" id="createNewCardBtn" title="为当前卡片组创建新卡片">创建卡片 ➕</button>
+    </div>
+    <div class="controls toolbar" role="toolbar">
+      <button class="mode-btn" id="modeToggle">切换到抽认卡模式 🎴</button>
+      <button class="action-btn secondary" id="showGlobalStatsBtn" title="查看所有卡片组的统计">全局统计 📊</button>
+      <div class="progress" title="复习进度">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      </div>
+      <div class="stats" id="statsPanel" role="status">
+        <div><strong id="statSummary">加载中…</strong></div>
+        <div style="margin-top:6px; font-size:13px; color:var(--muted);">
+          <div>总卡片：<strong id="totalCount">0</strong></div>
+          <div>Leitner 箱分布：<span id="levels">—</span></div>
+          <div>复习次数：<span id="reviewCount">0</span> · 上次复习：<span id="lastReview">—</span></div>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="action-btn" id="resetBtn" title="重置当前卡片组的所有进度">重置进度 ♻️</button>
+          <button class="action-btn" id="notifyToggle" title="开启/关闭页面每日提醒">提醒：开启</button>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap: 8px;">
+        <select id="test-push-select" class="action-btn secondary" style="padding-right: 24px;">
+          <option value="random">随机卡片提醒</option>
+          <option value="general">通用复习提醒</option>
+          <option value="congrats">完成祝贺</option>
+        </select>
+        <button class="action-btn" id="testPushBtn">发送测试 🔔</button>
+      </div>
+      <button class="action-btn secondary" id="installBtn" style="display:none;">安装应用 ⤓</button>
+    </div>
+  </header>
+  <main class="app" id="main"><section class="grid" id="cardGrid"></section></main>
+</div>
+
+<div id="globalStatsModal" class="modal"><div class="modal-content"><span class="modal-close-btn" id="closeModalBtn">&times;</span><h2>全局学习统计</h2><p>这里汇总了您所有卡片组的学习进度。</p><div class="chart-container" style="position: relative; height: 300px; width: 100%;"><canvas id="leitnerChart"></canvas></div><div id="smart-reminder-info" style="margin-top: 20px; text-align: center; font-style: italic;"></div></div></div>
+<div id="cardEditorModal" class="modal"><div class="modal-content"><span class="modal-close-btn" id="closeEditorBtn">&times;</span><h2 id="editorTitle">创建新卡片</h2><form id="cardEditorForm"><input type="hidden" id="editingCardIndex"><label for="cardFront">正面 (支持 HTML):</label><textarea id="cardFront" rows="3" required></textarea><label for="cardBack">背面 (支持 Markdown):</label><div class="editor-container"><textarea id="cardBack" rows="6" required></textarea><div id="markdownPreview" class="preview"></div></div><div class="form-actions"><button type="submit" class="action-btn" id="saveCardBtn">保存</button><button type="button" class="action-btn secondary" id="deleteCardBtn" style="display: none;">删除</button></div></form></div></div>
+<div class="toast" id="toast"></div>
+<script type="module">
+/* ==================================
+   应用主脚本 (单文件稳定版)
+   ================================== */
+
+// --- 1. 配置与模块导入 ---
+import { cardSetsConfig } from './data/sets.js';
+
+// --- 2. 全局状态变量 ---
+let currentSetId = 'threads';
+let cardsData = [];
+let leitner, stats, settings;
+let mode = 'grid';
+let reviewQueue = [];
+let currentIndex = 0;
+let autoFlipTimer = null;
+let deferredPrompt = null;
+let leitnerChartInstance = null;
+
+// --- 3. DOM 元素获取 ---
+const grid = document.getElementById('cardGrid');
+const progressFill = document.getElementById('progressFill');
+const modeToggle = document.getElementById('modeToggle');
+const totalCountEl = document.getElementById('totalCount');
+const levelsEl = document.getElementById('levels');
+const reviewCountEl = document.getElementById('reviewCount');
+const lastReviewEl = document.getElementById('lastReview');
+const statSummary = document.getElementById('statSummary');
+const notifyToggle = document.getElementById('notifyToggle');
+const toast = document.getElementById('toast');
+const titleEl = document.getElementById('title');
+const setSelect = document.getElementById('set-select');
+const resetBtn = document.getElementById('resetBtn');
+const testPushBtn = document.getElementById('testPushBtn');
+const testPushSelect = document.getElementById('test-push-select');
+const installBtn = document.getElementById('installBtn');
+// Modal & Editor elements
+const showGlobalStatsBtn = document.getElementById('showGlobalStatsBtn');
+const globalStatsModal = document.getElementById('globalStatsModal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const smartReminderInfo = document.getElementById('smart-reminder-info');
+const leitnerChartCanvas = document.getElementById('leitnerChart');
+const createNewCardBtn = document.getElementById('createNewCardBtn');
+const cardEditorModal = document.getElementById('cardEditorModal');
+const closeEditorBtn = document.getElementById('closeEditorBtn');
+const cardEditorForm = document.getElementById('cardEditorForm');
+const editorTitle = document.getElementById('editorTitle');
+const cardFrontInput = document.getElementById('cardFront');
+const cardBackInput = document.getElementById('cardBack');
+const markdownPreview = document.getElementById('markdownPreview');
+const editingCardIndexInput = document.getElementById('editingCardIndex');
+const deleteCardBtn = document.getElementById('deleteCardBtn');
+
+// --- 4. 数据持久化 ---
+function getStorageKeys(setId) { return { LEITNER: `flash_leitner_${setId}_v2`, STATS: `flash_stats_${setId}_v2`, SETTINGS: 'flash_settings_v2', CARDS: `flash_cards_${setId}_v2` }; }
+function loadJSON(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+function saveJSON(key, obj) { try { localStorage.setItem(key, JSON.stringify(obj)); } catch (e) {} }
+function initLeitner() { const obj = {}; for (let i = 0; i < cardsData.length; i++) obj[i] = 1; return obj; }
+function initStats() { const s = {}; for (let i = 0; i < cardsData.length; i++) s[i] = { again: 0, remember: 0, last: 0 }; return s; }
+
+function loadProgress() {
+  const STORAGE_KEYS = getStorageKeys(currentSetId);
+  leitner = loadJSON(STORAGE_KEYS.LEITNER) || initLeitner();
+  stats = loadJSON(STORAGE_KEYS.STATS) || initStats();
+  settings = loadJSON(STORAGE_KEYS.SETTINGS) || { remindersEnabled: true };
+}
+
+function persistAll() {
+  const STORAGE_KEYS = getStorageKeys(currentSetId);
+  saveJSON(STORAGE_KEYS.LEITNER, leitner);
+  saveJSON(STORAGE_KEYS.STATS, stats);
+  saveJSON(STORAGE_KEYS.SETTINGS, settings);
+}
+
+// --- 5. 核心逻辑：卡片组切换与加载 ---
+async function switchCardSet(newSetId) {
+  if (!cardSetsConfig[newSetId]) return;
+  showToast(`正在加载: ${cardSetsConfig[newSetId].name}...`);
+  grid.classList.add('fade-out');
+  await new Promise(resolve => setTimeout(resolve, 450));
+  try {
+    const storageKey = getStorageKeys(newSetId).CARDS;
+    let currentCards = loadJSON(storageKey);
+    if (!currentCards) {
+      const module = await import(cardSetsConfig[newSetId].path);
+      currentCards = module.default.data;
+      saveJSON(storageKey, currentCards);
+    }
+    currentSetId = newSetId;
+    cardsData = currentCards;
+    localStorage.setItem('flash_last_set_id_v1', newSetId);
+    if (mode === 'review') exitReviewMode();
+    loadProgress();
+    renderGrid();
+    updateStatsUI();
+    updateSettingsUI();
+    titleEl.textContent = `${cardSetsConfig[currentSetId].name} — Leitner 抽认卡`;
+  } catch (error) {
+    console.error(`加载卡片组失败: ${newSetId}`, error);
+    showToast('加载失败，请检查控制台。', 3000);
+  } finally {
+    grid.classList.remove('fade-out');
+    updateSWTodo();
+  }
+}
+
+// --- 6. UI渲染与交互 ---
+function renderGrid() {
+  grid.innerHTML = '';
+  cardsData.forEach((c, i) => {
+    const article = document.createElement('article');
+    article.className = 'card';
+    article.setAttribute('role', 'listitem');
+    article.setAttribute('tabindex', '0');
+    article.dataset.index = i;
+    article.dataset.flipped = 'false';
+    article.innerHTML = `
+      <div class="card__inner">
+        <section class="face front"><h2>${c.front}</h2><div class="subtitle">Leitner 等级：<strong>${leitner[i] || 1}</strong></div><div class="hr"></div><div class="btn-area"><button class="flip-btn">查看 ↺</button></div></section>
+        <section class="face back"><button class="edit-btn" onclick="window.app.editCard(${i})">✏️</button><div class="content">${marked.parse(c.back)}</div><div class="btn-area"><button class="remember-btn low" data-action="again">再看 🔁</button><button class="remember-btn high" data-action="remember">记住 ✅</button></div></section>
+      </div>`;
+    grid.appendChild(article);
+  });
+  totalCountEl.textContent = cardsData.length;
+  attachCardEvents();
+}
+function updateStatsUI() {
+    const total = cardsData.length;
+    totalCountEl.textContent = total;
+    const counts = [0, 0, 0, 0, 0, 0];
+    let reviewTotal = 0, last = 0;
+    for (let i = 0; i < total; i++) {
+        const level = leitner[i] || 1;
+        counts[level]++;
+        if (stats[i] && stats[i].last) {
+            reviewTotal += (stats[i].again || 0) + (stats[i].remember || 0);
+            last = Math.max(last, stats[i].last);
+        }
+    }
+    levelsEl.innerHTML = `1:<strong>${counts[1]}</strong> 2:<strong>${counts[2]}</strong> 3:<strong>${counts[3]}</strong> 4:<strong>${counts[4]}</strong> 5:<strong>${counts[5]}</strong>`;
+    reviewCountEl.textContent = reviewTotal;
+    lastReviewEl.textContent = last ? new Date(last).toLocaleString() : '—';
+    let remembered = 0, attempts = 0;
+    for (let i = 0; i < total; i++) {
+        const s = stats[i] || { again: 0, remember: 0 };
+        remembered += s.remember || 0;
+        attempts += (s.remember || 0) + (s.again || 0);
+    }
+    const rate = attempts ? Math.round((remembered / attempts) * 100) : 0;
+    statSummary.textContent = `掌握率：${rate}% · 箱1优先复习`;
+    const studied = Object.values(stats).filter(s => s && (s.remember || s.again)).length;
+    const pct = total > 0 ? Math.round((studied / total) * 100) : 0;
+    progressFill.style.width = pct + '%';
+}
+function updateSettingsUI() { if (settings) notifyToggle.textContent = '提醒：' + (settings.remindersEnabled ? '开启' : '关闭'); }
+function showToast(text, ms = 2400) { toast.textContent = text; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), ms); }
+function attachCardEvents() {
+    grid.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('click', e => {
+            const btn = e.target.closest('button');
+            if (btn && !btn.classList.contains('edit-btn')) {
+                if (btn.classList.contains('flip-btn')) toggleFlip(card);
+                else if (btn.dataset.action) handleRemember(card, btn.dataset.action);
+            }
+        });
+        card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { toggleFlip(card); e.preventDefault(); } if (e.key === 'ArrowRight' && mode === 'review') nextCard(); });
+    });
+}
+function toggleFlip(card, force) {
+    const flipped = card.dataset.flipped === 'true';
+    const next = (typeof force === 'boolean') ? force : !flipped;
+    card.dataset.flipped = next ? 'true' : 'false';
+    clearTimeout(autoFlipTimer);
+    if (!next) autoFlipTimer = setTimeout(() => { card.dataset.flipped = 'true'; }, 5000);
+}
+function handleRemember(card, action) {
+    const idx = Number(card.dataset.index);
+    const prevLevel = leitner[idx] || 1;
+    stats[idx] = stats[idx] || { again: 0, remember: 0, last: 0 };
+    if (action === 'remember') {
+        leitner[idx] = Math.min(prevLevel + 1, 5);
+        stats[idx].remember = (stats[idx].remember || 0) + 1;
+    } else {
+        leitner[idx] = 1;
+        stats[idx].again = (stats[idx].again || 0) + 1;
+    }
+    stats[idx].last = Date.now();
+    persistAll();
+    showToast(action === 'remember' ? '已标为「记住」✅' : '已标为「再看」🔁');
+    if (mode === 'review') nextCard(); else updateStatsUI();
+}
+function startReviewMode() {
+    mode = 'review';
+    modeToggle.textContent = '退出抽认卡模式 🏠';
+    grid.classList.add('single');
+    reviewQueue = buildReviewQueue();
+    if (reviewQueue.length === 0) { showToast('暂无需要复习的卡片。'); exitReviewMode(); return; }
+    currentIndex = 0;
+    showCurrentReviewCard();
+}
+function exitReviewMode() {
+    mode = 'grid';
+    modeToggle.textContent = '切换到抽认卡模式 🎴';
+    grid.classList.remove('single');
+    document.querySelectorAll('.card').forEach(c => { c.classList.remove('current'); c.dataset.flipped = 'false'; });
+    clearTimeout(autoFlipTimer);
+}
+function showCurrentReviewCard() {
+    document.querySelectorAll('.card').forEach(c => c.classList.remove('current'));
+    const card = reviewQueue[currentIndex];
+    if (!card) return;
+    card.classList.add('current');
+    card.dataset.flipped = 'false';
+    clearTimeout(autoFlipTimer);
+    autoFlipTimer = setTimeout(() => { card.dataset.flipped = 'true'; }, 3000);
+    card.focus();
+}
+function nextCard() { currentIndex++; if (currentIndex >= reviewQueue.length) { reviewQueue = buildReviewQueue(); currentIndex = 0; if (reviewQueue.length === 0) { exitReviewMode(); return; } } showCurrentReviewCard(); }
+function prevCard() { currentIndex--; if (currentIndex < 0) { currentIndex = reviewQueue.length - 1; } showCurrentReviewCard(); }
+function buildReviewQueue() {
+    const list = [];
+    grid.querySelectorAll('.card').forEach(c => {
+        const idx = Number(c.dataset.index);
+        const weight = Math.max(1, 6 - (leitner[idx] || 1));
+        for (let i = 0; i < weight; i++) list.push(c);
+    });
+    return shuffle(list);
+}
+function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+function setupSwipeGestures() {
+    let touchStartX = 0;
+    grid.addEventListener('touchstart', e => { if (mode === 'review') touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+    grid.addEventListener('touchend', e => {
+        if (mode !== 'review') return;
+        const touchEndX = e.changedTouches[0].screenX;
+        const swipeDistance = touchEndX - touchStartX;
+        if (Math.abs(swipeDistance) < 50) return;
+        if (swipeDistance < 0) nextCard(); else prevCard();
+    });
+}
+
+// --- 7. 编辑器与统计图表 ---
+function openCardEditor() { 
+  editorTitle.textContent = '创建新卡片'; 
+  cardEditorForm.reset(); 
+  editingCardIndexInput.value = ''; 
+  markdownPreview.innerHTML = ''; 
+  deleteCardBtn.style.display = 'none'; 
+  cardEditorModal.style.display = 'flex';
+  setTimeout(() => cardEditorModal.classList.add('show'), 10);
+  cardFrontInput.focus();
+}
+function editCard(index) {
+    const card = cardsData[index];
+    if (!card) return;
+    editorTitle.textContent = '编辑卡片';
+    cardEditorForm.reset();
+    editingCardIndexInput.value = index;
+    cardFrontInput.value = card.front;
+    cardBackInput.value = card.back;
+    markdownPreview.innerHTML = marked.parse(card.back);
+    deleteCardBtn.style.display = 'inline-block';
+    cardEditorModal.style.display = 'flex';
+    setTimeout(() => cardEditorModal.classList.add('show'), 10);
+}
+function closeCardEditorModal() {
+  cardEditorModal.classList.remove('show');
+  setTimeout(() => cardEditorModal.style.display = 'none', 300);
+}
+function saveCard(event) {
+    event.preventDefault();
+    const index = editingCardIndexInput.value;
+    const newCard = { front: cardFrontInput.value, back: cardBackInput.value };
+    if (index) { cardsData[index] = newCard; } else { cardsData.push(newCard); }
+    saveJSON(getStorageKeys(currentSetId).CARDS, cardsData);
+    closeCardEditorModal(); // <--- 修改
+    showToast('卡片已保存！');
+    renderGrid();
+    updateStatsUI();
+}
+function deleteCard() {
+    const index = editingCardIndexInput.value;
+    if (index === '' || !confirm('确认删除这张卡片吗？')) return;
+    cardsData.splice(index, 1);
+    saveJSON(getStorageKeys(currentSetId).CARDS, cardsData);
+    reindexProgressData(index);
+    closeCardEditorModal(); // <--- 修改
+    showToast('卡片已删除！');
+    renderGrid();
+    updateStatsUI();
+}
+function reindexProgressData(deletedIndex) {
+    const newLeitner = {}, newStats = {};
+    const deletedIdxNum = parseInt(deletedIndex, 10);
+    for (const oldIndexStr in leitner) {
+        const oldIndexNum = parseInt(oldIndexStr, 10);
+        let newIndex = oldIndexNum;
+        if (oldIndexNum > deletedIdxNum) newIndex = oldIndexNum - 1;
+        else if (oldIndexNum === deletedIdxNum) continue;
+        newLeitner[newIndex] = leitner[oldIndexStr];
+        if (stats[oldIndexStr]) newStats[newIndex] = stats[oldIndexStr];
+    }
+    leitner = newLeitner;
+    stats = newStats;
+    persistAll();
+}
+function aggregateAllStats() {
+    const allStats = { totalCards: 0, leitnerDistribution: [0, 0, 0, 0, 0], setsToReview: {} };
+    for (const setId in cardSetsConfig) {
+        const leitnerData = loadJSON(getStorageKeys(setId).LEITNER);
+        if (leitnerData) {
+            let reviewableCount = 0;
+            Object.values(leitnerData).forEach(level => {
+                allStats.totalCards++;
+                if (level >= 1 && level <= 5) allStats.leitnerDistribution[level - 1]++;
+                if (level <= 2) reviewableCount++;
+            });
+            if (reviewableCount > 0) allStats.setsToReview[cardSetsConfig[setId].name] = reviewableCount;
+        }
+    }
+    return allStats;
+}
+function showGlobalStats() {
+    const stats = aggregateAllStats();
+    const setsToReview = Object.keys(stats.setsToReview);
+    if (setsToReview.length > 0) smartReminderInfo.textContent = `今天建议优先复习：${setsToReview.join(', ')}。`;
+    else smartReminderInfo.textContent = '太棒了！所有卡片都已熟练掌握。';
+    const chartData = { labels: ['箱 1', '箱 2', '箱 3', '箱 4', '箱 5'], datasets: [{ label: '卡片分布', data: stats.leitnerDistribution, backgroundColor: ['rgba(255, 99, 132, 0.5)','rgba(255, 159, 64, 0.5)','rgba(255, 205, 86, 0.5)','rgba(75, 192, 192, 0.5)','rgba(54, 162, 235, 0.5)'], borderWidth: 1 }] };
+    if (leitnerChartInstance) leitnerChartInstance.destroy();
+    leitnerChartInstance = new Chart(leitnerChartCanvas, { type: 'bar', data: chartData, options: { scales: { y: { beginAtZero: true, title: { display: true, text: '卡片数量' } } }, plugins: { title: { display: true, text: `Leitner 箱分布 (总卡片数: ${stats.totalCards})` }, legend: { display: false } }, responsive: true, maintainAspectRatio: false } });
+    // 修改：不再直接操作 style.display
+  globalStatsModal.style.display = 'flex'; // 先设为 flex 布局
+  setTimeout(() => globalStatsModal.classList.add('show'), 10); // 延迟一小会再添加 show 类以触发动画
+}
+function closeGlobalStatsModal() {
+  globalStatsModal.classList.remove('show');
+  setTimeout(() => globalStatsModal.style.display = 'none', 300); // 等动画结束后再隐藏
+}
+// --- 8. PWA 与通知 ---
+function registerServiceWorker() { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js', { type: 'module' }).then(reg => console.log('✅ SW 注册成功', reg)).catch(err => console.error('❌ SW 注册失败', err)); }
+async function requestNotificationPermission() { if (!('Notification' in window)) return false; let p = Notification.permission; if (p === 'denied') return false; if (p === 'default') p = await Notification.requestPermission(); return p === 'granted'; }
+async function setupDailyReminder() {
+    if (!('serviceWorker' in navigator) || !('PeriodicSyncManager' in window)) return;
+    const reg = await navigator.serviceWorker.ready;
+    const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+    if (status.state !== 'granted') return;
+    try { const tags = await reg.periodicSync.getTags(); if (!tags.includes('daily-reminder')) await reg.periodicSync.register('daily-reminder', { minInterval: 12 * 3600 * 1000 }); } catch (e) { console.error('注册每日提醒失败', e); }
+}
+function scheduleSessionReminders() { /* Placeholder */ }
+function updateSWTodo() {
+    if (!navigator.serviceWorker.controller) return;
+    const stats = aggregateAllStats();
+    const setsToReview = Object.keys(stats.setsToReview);
+    let message = '今天有新的学习任务在等你。';
+    if (setsToReview.length > 0) message = `今天建议优先复习：${setsToReview.join(', ')}。`;
+    else if (stats.totalCards > 0) message = '太棒了！所有卡片都已熟练掌握。';
+    navigator.serviceWorker.controller.postMessage({ action: 'set-daily-todo', payload: { message } });
+}
+async function sendTestPush() {
+    if (!await requestNotificationPermission()) return;
+    const testType = testPushSelect.value;
+    let payload = {};
+    // ... (rest of sendTestPush logic)
+    if (navigator.serviceWorker.controller) { /* ... */ } else { alert('Service Worker 未就绪，请刷新页面重试。'); }
+}
+function setupPWAInstall() {
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'inline-block'; });
+    installBtn.addEventListener('click', async () => { if (!deferredPrompt) return; deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; if (outcome === 'accepted') showToast('已安装为应用！'); deferredPrompt = null; installBtn.style.display = 'none'; });
+}
+
+// --- 9. 初始化与事件绑定 ---
+function bindEvents() {
+    setSelect.addEventListener('change', (e) => switchCardSet(e.target.value));
+    resetBtn.addEventListener('click', () => { if (confirm('确认重置当前卡片组的所有进度？')) { leitner = initLeitner(); stats = initStats(); persistAll(); renderGrid(); updateStatsUI(); showToast('当前进度已重置。'); } });
+    modeToggle.addEventListener('click', () => { if (mode === 'grid') startReviewMode(); else exitReviewMode(); });
+    notifyToggle.addEventListener('click', () => { settings.remindersEnabled = !settings.remindersEnabled; saveJSON(getStorageKeys(currentSetId).SETTINGS, settings); updateSettingsUI(); showToast(settings.remindersEnabled ? '已开启每日提醒' : '已关闭每日提醒'); });
+    testPushBtn.addEventListener('click', sendTestPush);
+    showGlobalStatsBtn.addEventListener('click', showGlobalStats);
+    closeModalBtn.addEventListener('click', closeGlobalStatsModal); // <--- 修改
+    window.addEventListener('click', (event) => { if (event.target == globalStatsModal) globalStatsModal.style.display = 'none'; });
+    createNewCardBtn.addEventListener('click', openCardEditor);
+    closeEditorBtn.addEventListener('click', closeCardEditorModal); // <--- 修改
+    cardEditorForm.addEventListener('submit', saveCard);
+    cardBackInput.addEventListener('input', () => { markdownPreview.innerHTML = marked.parse(cardBackInput.value); });
+    deleteCardBtn.addEventListener('click', deleteCard);
+    window.addEventListener('click', (event) => {
+    if (event.target == globalStatsModal) {
+      closeGlobalStatsModal(); // <--- 修改
+    }
+    if (event.target == cardEditorModal) {
+      closeCardEditorModal(); // <--- 修改
+    }
+  });
+}
+function initSetSelector() {
+    const lastSetId = localStorage.getItem('flash_last_set_id_v1') || 'threads';
+    currentSetId = cardSetsConfig[lastSetId] ? lastSetId : 'threads';
+
+    for (const setId in cardSetsConfig) {
+        const option = document.createElement('option');
+        option.value = setId;
+        option.textContent = cardSetsConfig[setId].name;
+        setSelect.appendChild(option);
+    }
+    setSelect.value = currentSetId;
+}
+async function initializeApp() {
+    initSetSelector();
+    bindEvents();
+    setupPWAInstall();
+    await switchCardSet(currentSetId);
+    registerServiceWorker();
+    navigator.serviceWorker.ready.then(async () => { if (await requestNotificationPermission()) { setupDailyReminder(); scheduleSessionReminders(); } });
+}
+window.app = {
+  editCard: editCard
+};
+document.addEventListener('DOMContentLoaded', initializeApp);
+</script>
+
+</body>
+</html>

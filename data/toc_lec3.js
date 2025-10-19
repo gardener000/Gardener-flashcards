@@ -1,0 +1,13 @@
+// data/toc_lec3.js
+export default {
+  name: "计算理论：有限自动机",
+  data: [
+    {front:"什么是 <mark>有限自动机</mark> (Finite Automata)？ 🤔", back:`<dl><dt>核心思想</dt><dd>一个为识别语言而制造的抽象 <mark>机器</mark>，是正则表达式的“识别器”。</dd><dt>组成要素</dt><dd>拥有 <mark>有限个状态</mark>，根据 <mark>输入信号</mark> 进行 <mark>状态转移</mark>。</dd><dt>生活实例</dt><dd>超市自动门（状态：开/关）、面试官情绪（状态：印象好/中/差）。</dd></dl>`},
+    {front:"<mark>DFA</mark> (确定性有限自动机) 如何工作？ ⚙️", back:`<dl><dt>五元组定义</dt><dd><code>(K, Σ, δ, s, F)</code> 分别是：状态集、字母表、转移函数、初始状态、最终状态集。</dd><dt>工作流程</dt><dd>从 <mark>初始状态</mark> 开始，一个接一个地读取输入字符，根据 <mark>转移函数 δ</mark> 跳转到下一状态。</dd><dt>接受/拒绝</dt><dd>读完整个字符串后，若机器停在 <mark>最终状态 (F)</mark> 则 <mark>接受</mark> (Yes)，否则 <mark>拒绝</mark> (No)。</dd><dt>确定性</dt><dd><code>δ</code> 是一个 <mark>函数</mark>，(当前状态, 输入) 的下一个状态是 <mark>唯一确定</mark> 的。</dd></dl>`},
+    {front:"如何 <mark>设计一个 DFA</mark>？ ✍️", back:`<dl><dt>核心策略</dt><dd>让每个状态拥有明确的 <mark>“记忆”意义</mark>。</dd><dt>应用：不含'bbb'</dt><dd><code>q0</code>: 安全；<code>q1</code>: 刚看到1个'b'；<code>q2</code>: 刚看到2个'b'；<code>q3</code>: 已看到'bbb' (死亡状态)。</dd><dt>状态意义</dt><dd>通过赋予状态特定含义，将语言规则转化为状态转移图。</dd></dl>`},
+    {front:"什么是 <mark>NFA</mark> (非确定性有限自动机)？ ✨", back:`<dl><dt>引入原因</dt><dd>DFA 构造复杂，状态多。NFA <mark>更直观、构造更简单</mark>。</dd><dt>三大“超能力”</dt><dd>1. <mark>分身术</mark>：一个输入可跳到多个状态。<br>2. <mark>凭空消失</mark>：一个输入无处可去（路径终止）。<br>3. <mark>瞬间移动 (ε-move)</mark>：不读输入即可跳转状态。</dd><dt>“不确定性”本质</dt><dd>NFA的转移是 <mark>关系</mark>，而非函数。</dd></dl>`},
+    {front:"NFA 如何 <mark>接受</mark> 字符串？ 🌌", back:`<dl><dt>并行宇宙模型</dt><dd>NFA 同时探索所有可能的路径，像有无数 <mark>克隆人</mark> 在走迷宫。</dd><dt>接受条件</dt><dd>只要 <mark>有任何一个</mark> 克隆人在读完字符串后，停在了 <mark>最终状态</mark>，整个NFA就 <mark>接受</mark> 该字符串。</dd><dt>设计思想</dt><dd>NFA 的设计常基于 <mark>“猜测”</mark>。例如，猜测某个'a'是倒数第k个字符。</dd></dl>`},
+    {front:"NFA vs. DFA：<mark>能力等价</mark>！ 🤯", back:`<dl><dt>核心问题</dt><dd>NFA的“超能力”是否让它比DFA更强？</dd><dt>惊人答案</dt><dd><mark>不！</mark> 它们的表达能力（能识别的语言集合）是 <mark>完全等价</mark> 的。</dd><dt>理论意义 (Scott & Rabin)</dt><dd>对于任何 NFA，总能构造出一个与之等价的 DFA。NFA 只是 <mark>设计上更方便</mark>，未带来本质能力提升。</dd></dl>`},
+    {front:"如何将 NFA 转换为 DFA？(<mark>子集构造法</mark>) 🛠️", back:`<dl><dt>核心障碍</dt><dd>消除 NFA 的 <mark>分身术</mark> (关系) 和 <mark>瞬移 (ε-move)</mark>。</dd><dt>Idea 1: 状态打包</dt><dd>DFA 的一个新状态 = NFA <mark>一组状态的集合</mark>。例如 DFA 状态 <code>{q0, q2}</code> 代表 NFA 同时处于 q0 和 q2。</dd><dt>Idea 2: 处理瞬移</dt><dd>使用 <mark>ε-闭包 E(q)</mark> 计算从 q 出发，仅通过瞬移能到达的所有状态。</dd><dt>算法精髓</dt><dd>DFA 的新状态转移 = NFA 原状态集合 <mark>先走一步输入</mark>，再对所有到达点做 <mark>ε-闭包</mark>。</dd></dl>`}
+  ]
+};
