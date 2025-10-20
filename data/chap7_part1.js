@@ -1,0 +1,15 @@
+// data/chap7_part1.js
+export default {
+  name: "数值分析：线性系统迭代法 (上)",
+  data: [
+    {front:"为何需要<mark>迭代法</mark>解线性系统？🤔",back:`<dl><dt>核心思想</dt><dd>将 <mark>Ax=b</mark> 转换为不动点形式 <mark>x = Tx + c</mark>，从初始猜测 <mark>x⁽⁰⁾</mark> 开始，通过 <mark>x⁽ᵏ⁺¹⁾=Tx⁽ᵏ⁾+c</mark> 迭代求解。</dd><dt>适用场景</dt><dd>主要用于求解大型<mark>稀疏</mark>线性系统。</dd><dt>为何不用直接法</dt><dd>直接法(如LU分解)会产生<mark>填充(fill-in)</mark>，破坏稀疏性，导致内存和计算量剧增。迭代法能利用稀疏性高效计算。</dd></dl>`},
+    {front:"如何衡量向量的“大小”？—<mark>向量范数</mark>📏",back:`<dl><dt>定义</dt><dd>向量范数 <mark>||x||</mark> 是衡量向量长度或大小的函数，满足<mark>正定性</mark>、<mark>齐次性</mark>、<mark>三角不等式</mark>三性质。</dd><dt>常用范数</dt><dd><mark>L₁范数</mark>(曼哈顿): Σ|xᵢ|；<mark>L₂范数</mark>(欧氏): √(Σxᵢ²)；<mark>L∞范数</mark>(最大值): max|xᵢ|。</dd></dl>`},
+    {front:"向量序列收敛的关键是什么？✨",back:`<dl><dt>向量收敛定义</dt><dd>向量序列 {x⁽ᵏ⁾} 收敛到 x 是指它们的距离 <mark>||x⁽ᵏ⁾-x||</mark> 趋于0。</dd><dt>关键定理</dt><dd>向量收敛 <mark>当且仅当</mark> 其<mark>每个分量</mark>都收敛。</dd><dt>范数等价性</dt><dd>在有限维空间中，<mark>所有向量范数都等价</mark>。这意味着用任何一种方便的范数(如L∞范数)证明收敛即可。</dd></dl>`},
+    {front:"如何衡量矩阵的“大小”？—<mark>矩阵范数</mark>📐",back:`<dl><dt>定义</dt><dd>矩阵范数 <mark>||A||</mark> 是衡量矩阵大小的函数，除满足向量范数三性质外，还需满足第四条：<mark>相容性</mark>。</dd><dt>相容性</t><dd><mark>||AB|| ≤ ||A||·||B||</mark>。这是控制误差传播的关键，能将矩阵幂 <mark>||Tᵏ||</mark> 的分析简化为标量幂 <mark>||T||ᵏ</mark>。</dd></dl>`},
+    {front:"什么是<mark>自然范数</mark>？以及常见公式 🌿",back:`<dl><dt>核心思想</dt><dd>矩阵A是作用于向量x的算子，自然范数定义为它能产生的<mark>最大“拉伸”因子</mark>：<mark>||A||ₚ = max (||Ax||ₚ / ||x||ₚ)</mark>。</dd><dt>常用公式</dt><dd><mark>||A||∞ (最大行和)</mark>: maxᵢ(Σⱼ|aᵢⱼ|)；<mark>||A||₁ (最大列和)</mark>: maxⱼ(Σᵢ|aᵢⱼ|)；<mark>||A||₂ (谱范数)</mark>: √(λₘₐₓ(AᵀA))。</dd></dl>`},
+    {front:"收敛性分析的终极武器：<mark>谱半径</mark>🎯",back:`<dl><dt>定义</t><dd>矩阵A的谱半径 <mark>ρ(A)</mark> 是其所有特征值中<mark>绝对值最大</mark>的那个。</dd><dt>关键定理</dt><dd>谱半径是任何自然范数的<mark>下界</mark>：<mark>ρ(A) ≤ ||A||</mark>。这是所有收敛性判据的基石。</dd><dt>收敛矩阵</dt><dd>若 <mark>lim Aᵏ = 0</mark> (k→∞)，则称A为收敛矩阵。这是迭代法误差趋于0的直接保障。</dd></dl>`},
+    {front:"经典迭代法之一：<mark>雅可比(Jacobi)</mark>法 👴",back:`<dl><dt>核心思想</dt><dd>计算 <mark>x⁽ᵏ⁺¹⁾</mark> 时，完全依赖于<mark>上一轮</mark>的旧值 <mark>x⁽ᵏ⁾</mark>。</dd><dt>迭代矩阵</dt><dd>将A分解为 <mark>A=D-L-U</mark>，雅可比迭代矩阵为 <mark>T_J = D⁻¹(L+U)</mark>。</dd><dt>特点</dt><dd>思想简单，易于并行计算，但需要<mark>存储两个完整向量</mark>，被认为有些浪费。</dd></dl>`},
+    {front:"经典迭代法之二：<mark>高斯-赛德尔(Gauss-Seidel)</mark>法 👨‍🏫",back:`<dl><dt>核心思想</dt><dd>计算 <mark>xᵢ⁽ᵏ⁺¹⁾</mark> 时，<mark>立即使用</mark>本轮已算出的新分量 <mark>xⱼ⁽ᵏ⁺¹⁾ (j<i)</mark>。</dd><dt>迭代矩阵</dt><dd>高斯-赛德尔迭代矩阵为 <mark>T_G = (D-L)⁻¹U</mark>。</dd><dt>特点</dt><dd>通常比雅可比收敛更快，且<mark>节省存储空间</mark>(原地更新即可)。但两者并非总有优劣之分。</dd></dl>`},
+    {front:"小结 ✅",back:`<dl><dt>迭代法基础</dt><dd>将 <mark>Ax=b</mark> 变为 <mark>x=Tx+c</mark>，适用于大型稀疏矩阵。</dd><dt>分析工具</dt><dd>用<mark>范数</mark>衡量大小和距离；有限维空间所有范数<mark>等价</mark>。</dd><dt>核心判据</dt><dd>迭代法收敛的充要条件是迭代矩阵的<mark>谱半径 ρ(T) < 1</mark>。</dd><dt>经典方法</dt><dd><mark>雅可比</mark>(Jacobi)使用旧值，<mark>高斯-赛德尔</mark>(Gauss-Seidel)立即使用新值。</dd></dl>`}
+  ]
+};

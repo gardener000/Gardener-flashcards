@@ -23,6 +23,11 @@ export const cardSetsConfig = {
   "aai":{
     name:"aai_chap2：微处理器体系结构",
     path:"/data/microprocessor-architecture.js"
+  },
+  "na1":{
+    name:"数值分析：线性系统迭代法 (上)",
+    path:"/data/chap1_part1.js"
   }
+  
   
 };
