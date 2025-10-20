@@ -26,7 +26,7 @@ export const cardSetsConfig = {
   },
   "na1":{
     name:"数值分析：线性系统迭代法 (上)",
-    path:"/data/chap1_part1.js"
+    path:"/data/chap7_part1.js"
   }
   
   
