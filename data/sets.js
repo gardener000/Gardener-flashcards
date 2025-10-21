@@ -27,6 +27,10 @@ export const cardSetsConfig = {
   "na1":{
     name:"数值分析：线性系统迭代法 (上)",
     path:"/data/chap7_part1.js"
+  },
+  "cnMAC-1":{
+    name:"计算机网络：MAC层（上）",
+    path:"/data/mac-layer-part1.js"
   }
   
   
