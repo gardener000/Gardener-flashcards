@@ -31,7 +31,10 @@ export const cardSetsConfig = {
   "cnMAC-1":{
     name:"计算机网络：MAC层（上）",
     path:"/data/mac-layer-part1.js"
+  },
+  "os-chap5":{
+    name:"操作系统：CPU调度算法",
+    path:"/data/cpu_scheduling.js"
   }
-  
   
 };
