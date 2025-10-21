@@ -35,6 +35,11 @@ export const cardSetsConfig = {
   "os-chap5":{
     name:"操作系统：CPU调度算法",
     path:"/data/cpu_scheduling.js"
+  },
+  "javaw6hw":{
+    name:"Java 核心容器：数组与集合W6作业",
+    path:"/data/java-containers.js"
   }
+
   
 };
