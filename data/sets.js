@@ -39,6 +39,10 @@ export const cardSetsConfig = {
   "javaw6hw":{
     name:"Java 核心容器：数组与集合W6作业",
     path:"/data/java-containers.js"
+  },
+  "na2":{
+    name:"数值分析：迭代法",
+    path:"/data/na2.js"
   }
 
   
