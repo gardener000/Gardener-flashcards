@@ -43,6 +43,10 @@ export const cardSetsConfig = {
   "na2":{
     name:"数值分析：迭代法",
     path:"/data/na2.js"
+  },
+  "aai4-1":{
+    name:"aai_chap4-1：数据移动与编码",
+    path:"/data/assembly_chap4.js"
   }
 
   
