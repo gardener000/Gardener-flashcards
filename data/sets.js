@@ -47,6 +47,10 @@ export const cardSetsConfig = {
   "aai4-1":{
     name:"aai_chap4-1：数据移动与编码",
     path:"/data/assembly_chap4.js"
+  },
+  "java-w2ppt":{
+    name:"Java: 2 Basic Java",
+    path:"/data/java-w2-review.js"
   }
 
   
