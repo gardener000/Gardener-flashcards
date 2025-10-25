@@ -51,6 +51,14 @@ export const cardSetsConfig = {
   "java-w2ppt":{
     name:"Java: 2 Basic Java",
     path:"/data/java-w2-review.js"
+  },
+  "aai-chap3-1":{
+    name:"汇编Chap3:寻址方式（上）",
+    path:"/data/aai_chap3_1.js"
+  },
+  "aai-chap3-2":{
+    name:"汇编Chap3:寻址方式（下）",
+    path:"/data/aai_chap3_2.js"
   }
 
   
