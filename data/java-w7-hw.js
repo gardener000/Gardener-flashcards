@@ -1,0 +1,12 @@
+// data/java-w7-hw.js
+export default {
+  name: "JavaW7作业：异常处理",
+  data: [
+    {front:"什么是 <mark>异常</mark>？以及它的分类 🧭", back:"<dl><dt>异常是什么</dt><dd>异常是一个在程序执行期间发生的、中断正常指令流程的<mark>事件对象</mark>。它继承自 `Throwable` 类。</dd><dt>异常分类</dt><dd><b>Checked Exception (检查性异常)</b>: 编译时强制检查，必须用 `try-catch` 捕获或 `throws` 声明。例如: `IOException`, `FileNotFoundException`。<br><b>Unchecked Exception (非检查性异常)</b>: 运行时发生，不强制处理。包括 `RuntimeException` (如 `NullPointerException`) 和 `Error` (如 `OutOfMemoryError`)。</dd></dl>"},
+    {front:"`try-catch-finally` 的核心规则 ⚙️", back:"<dl><dt>结构</dt><dd>一个 `try` 块可以跟<mark>多个 catch</块>或一个 `finally` 块，或者两者都有。</dd><dt>执行顺序</dt><dd>当异常发生时，JVM会从上到下查找第一个匹配的 `catch` 块执行，其余的将被跳过。子类异常的 `catch` 必须在父类之前。</dd><dt>finally</dt><dd>`finally` 块中的代码<mark>总会执行</mark>（除非JVM退出），常用于资源释放。</dd><dt>特殊组合</dt><dd>`try-finally` 结构是合法的，即使没有任何 `catch` 块。</dd></dl>"},
+    {front:"`throw` 和 `throws` 的区别 🚀", back:"<dl><dt>throws 关键字</dt><dd>用在<mark>方法签名</mark>中，声明该方法可能会抛出的检查性异常，将处理责任“扔”给调用者。<br><code>void readFile() <mark>throws</mark> IOException;</code></dd><dt>throw 关键字</dt><dd>用在<mark>方法体内部</mark>，主动抛出一个具体的异常对象实例。<br><code><mark>throw new</mark> NullPointerException(\"Data not found\");</code></dd><dt>关键点</dt><dd>只能 `throw` 一个 `Throwable` 或其子类的对象，不能是 `int` 等基本类型。</dd></dl>"},
+    {front:"常见的异常类型实例 📋", back:"<dl><dt>检查性 (Checked)</dt><dd>`FileNotFoundException`: 文件未找到。<br>`IOException`: 通用I/O操作失败。</dd><dt>非检查性 (Unchecked/Runtime)</dt><dd>`NullPointerException`: 对 `null` 对象进行操作。<br>`ArithmeticException`: 算术错误，如<mark>除以零</mark>。<br>`IndexOutOfBoundsException`: 数组或集合越界访问。<br>`ClassCastException`: 对象类型转换失败。</dd></dl>"},
+    {front:"自定义异常与异常对象 🧩", back:"<dl><dt>自定义异常</dt><dd>通过<mark>继承 `Exception`</mark> (检查性) 或 `RuntimeException` (非检查性) 来创建自己的异常类，使错误信息更明确。</dd><dt>异常对象内容</dt><dd>每个异常对象都包含重要信息，尤其是<mark>调用栈跟踪 (Calling-Stack Trace)</mark>，它记录了从异常发生点到程序起点的所有方法调用序列，是调试的关键。</dd></dl>"},
+    {front:"Java异常处理核心速记 🧠", back:"<dl><dt>目的</dt><dd>将<mark>业务逻辑</mark>与<mark>错误处理</mark>代码分离，增强程序健壮性。</dd><dt>原则</dt><dd>检查性异常必须<mark>捕获 (catch)</mark> 或<mark>声明 (throws)</mark>。<br>运行时异常通常反映了<mark>编程逻辑错误</mark>，应修正代码而非捕获。</dd><dt>流程</dt><dd>方法内发生异常 -> 方法终止 -> JVM查找匹配的 `catch` 块 -> 若无，则异常继续向调用栈上层抛出 -> 直到被捕获或导致线程终止。</dd></dl>"}
+  ]
+};

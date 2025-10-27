@@ -59,6 +59,10 @@ export const cardSetsConfig = {
   "aai-chap3-2":{
     name:"汇编Chap3:寻址方式（下）",
     path:"/data/aai_chap3_2.js"
+  },
+  "javaw7hw":{
+    name:"JavaW7作业：异常处理",
+    path:"/data/java-w7-hw.js"
   }
 
   
