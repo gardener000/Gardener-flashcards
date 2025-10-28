@@ -36,9 +36,9 @@ export const cardSetsConfig = {
     name:"计算机网络：MAC层（上）",
     path:"/data/mac-layer-part1.js"
   },
-  "cnMAC-2":{
+  "cnMAC-2-0":{
     name:"计算机网络：MAC层（下）",
-    path:"/data/cn_mac_layer_part2.js"
+    path:"/data/cn_mac_layer_part2_new.js"
   },
   //os
   "os-chap5":{
