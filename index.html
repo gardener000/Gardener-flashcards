@@ -393,9 +393,57 @@ function persistAll() {
   saveJSON(STORAGE_KEYS.STATS, stats);
   saveJSON(STORAGE_KEYS.SETTINGS, settings);
 }
-
-// --- 5. 核心逻辑：卡片组切换与加载 ---
+// 【替换】原来的 switchCardSet 函数
 async function switchCardSet(newSetId) {
+  if (!cardSetsConfig[newSetId]) return;
+
+  // 如果用户未登录，则退回到旧的本地模式
+  if (!currentUser) {
+    return switchCardSetLocal(newSetId); // 我们需要把旧逻辑放到一个新函数里
+  }
+
+  showToast(`正在从云端同步: ${cardSetsConfig[newSetId].name}...`);
+  grid.classList.add('fade-out');
+  await new Promise(resolve => setTimeout(resolve, 450));
+
+  try {
+    // 1. 从 Firestore 获取卡片数据
+    let setData = await firebase.getCardSet(currentUser.uid, newSetId);
+    
+    // 如果云端没有这份数据（例如是新用户），则从模板文件加载并上传
+    if (!setData) {
+      console.log(`云端无数据，为用户 ${currentUser.uid} 创建 ${newSetId}`);
+      const module = await import(cardSetsConfig[newSetId].path);
+      const templateData = module.default.data;
+      setData = { name: cardSetsConfig[newSetId].name, cards: templateData };
+      await firebase.saveCardSet(currentUser.uid, newSetId, setData);
+    }
+    
+    // 2. 从 Firestore 获取学习进度
+    const progressData = await firebase.getProgress(currentUser.uid, newSetId);
+    
+    // 3. 更新全局状态
+    currentSetId = newSetId;
+    cardsData = setData.cards;
+    leitner = progressData?.leitner || initLeitner();
+    stats = progressData?.stats || initStats();
+    
+    // 4. 渲染UI
+    if (mode === 'review') exitReviewMode();
+    renderGrid();
+    updateStatsUI();
+    updateSettingsUI();
+    titleEl.textContent = `${setData.name} — Leitner 抽认卡`;
+
+  } catch (error) {
+    console.error(`从 Firestore 加载卡片组失败: ${newSetId}`, error);
+    showToast('从云端同步失败！', 3000);
+  } finally {
+    grid.classList.remove('fade-out');
+  }
+}
+// --- 5. 核心逻辑：卡片组切换与加载 ---
+async function switchCardSetLocal(newSetId) {
   if (!cardSetsConfig[newSetId]) return;
   showToast(`正在加载: ${cardSetsConfig[newSetId].name}...`);
   grid.classList.add('fade-out');
@@ -534,9 +582,19 @@ function handleRemember(card, action) {
         stats[idx].again = (stats[idx].again || 0) + 1;
     }
     stats[idx].last = Date.now();
+    if (currentUser) {
+    // 登录状态下，异步保存进度到 Firestore
+    const progressData = { leitner, stats };
+    firebase.saveProgress(currentUser.uid, currentSetId, progressData)
+      .then(() => console.log('进度已同步到云端'))
+      .catch(err => console.error('进度同步失败', err));
+  } else {
+    // 未登录状态下，保存到 localStorage
     persistAll();
-    showToast(action === 'remember' ? '已标为「记住」✅' : '已标为「再看」🔁');
-    if (mode === 'review') nextCard(); else updateStatsUI();
+  }
+  
+  showToast(action === 'remember' ? '已标为「记住」✅' : '已标为「再看」🔁');
+  if (mode === 'review') nextCard(); else updateStatsUI();
 }
 function startReviewMode() {
     mode = 'review';
@@ -616,27 +674,59 @@ function closeCardEditorModal() {
   cardEditorModal.classList.remove('show');
   setTimeout(() => cardEditorModal.style.display = 'none', 300);
 }
-function saveCard(event) {
+async function saveCard(event) {
     event.preventDefault();
-    const index = editingCardIndexInput.value;
-    const newCard = { front: cardFrontInput.value, back: cardBackInput.value };
-    if (index) { cardsData[index] = newCard; } else { cardsData.push(newCard); }
+  
+  const index = editingCardIndexInput.value;
+  const newCard = { front: cardFrontInput.value, back: cardBackInput.value };
+
+  if (index) {
+    cardsData[index] = newCard;
+  } else {
+    cardsData.push(newCard);
+  }
+  
+  // 如果用户已登录，则保存到 Firestore
+  if (currentUser) {
+    showToast('正在同步到云端...');
+    const setData = { name: cardSetsConfig[currentSetId].name, cards: cardsData };
+    await firebase.saveCardSet(currentUser.uid, currentSetId, setData);
+  } else {
+    // 未登录则保存到 localStorage (保持本地模式可用)
     saveJSON(getStorageKeys(currentSetId).CARDS, cardsData);
-    closeCardEditorModal(); // <--- 修改
-    showToast('卡片已保存！');
-    renderGrid();
-    updateStatsUI();
+  }
+
+  closeCardEditorModal();
+  showToast('卡片已保存！');
+  renderGrid();
+  updateStatsUI();
 }
-function deleteCard() {
-    const index = editingCardIndexInput.value;
-    if (index === '' || !confirm('确认删除这张卡片吗？')) return;
-    cardsData.splice(index, 1);
+// 【替换】deleteCard 函数
+async function deleteCard() {
+  const index = editingCardIndexInput.value;
+  if (index === '' || !confirm('确认删除这张卡片吗？')) return;
+
+  cardsData.splice(index, 1);
+  reindexProgressData(index); // 先在本地重排进度
+  
+  if (currentUser) {
+    showToast('正在从云端删除...');
+    // 同时更新云端的卡片和进度
+    const setData = { name: cardSetsConfig[currentSetId].name, cards: cardsData };
+    const progressData = { leitner, stats };
+    await Promise.all([
+      firebase.saveCardSet(currentUser.uid, currentSetId, setData),
+      firebase.saveProgress(currentUser.uid, currentSetId, progressData)
+    ]);
+  } else {
     saveJSON(getStorageKeys(currentSetId).CARDS, cardsData);
-    reindexProgressData(index);
-    closeCardEditorModal(); // <--- 修改
-    showToast('卡片已删除！');
-    renderGrid();
-    updateStatsUI();
+    persistAll(); // persistAll 会保存 leitner 和 stats
+  }
+
+  closeCardEditorModal();
+  showToast('卡片已删除！');
+  renderGrid();
+  updateStatsUI();
 }
 function reindexProgressData(deletedIndex) {
     const newLeitner = {}, newStats = {};
