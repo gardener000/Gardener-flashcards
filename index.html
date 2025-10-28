@@ -4,9 +4,19 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
 <title>Leitner 学习卡片</title>
+<div id="auth-container" style="margin-top: 10px;">
+  <button id="loginBtn" class="action-btn">登录以同步数据 ☁️</button>
+  <div id="userInfo" style="display: none; align-items: center; gap: 10px;">
+    <span id="userName" style="font-weight: 600;"></span>
+    <button id="logoutBtn" class="action-btn secondary">登出</button>
+  </div>
+</div>
 <meta name="description" content="一个功能强大的、支持离线和自定义的 Leitner 学习卡片 PWA 应用。"/>
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/favicon.ico" type="image/x-icon">
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
@@ -295,9 +305,12 @@ mark{background:linear-gradient(120deg,var(--highlight) 0%,rgba(255,225,115,0.35
    ================================== */
 
 // --- 1. 配置与模块导入 ---
+import * as firebase from './js/firebase.js';
+import { migrateLocalDataToFirestore } from './js/migration.js';
 import { cardSetsConfig } from './data/sets.js';
 
 // --- 2. 全局状态变量 ---
+let currentUser = null; // 用于保存当前登录用户的信息
 let currentSetId = 'threads';
 let cardsData = [];
 let leitner, stats, settings;
@@ -354,6 +367,24 @@ function loadProgress() {
   leitner = loadJSON(STORAGE_KEYS.LEITNER) || initLeitner();
   stats = loadJSON(STORAGE_KEYS.STATS) || initStats();
   settings = loadJSON(STORAGE_KEYS.SETTINGS) || { remindersEnabled: true };
+}
+
+function updateAuthUI(user) {
+  const loginBtn = document.getElementById('loginBtn');
+  const userInfoDiv = document.getElementById('userInfo');
+  const userNameSpan = document.getElementById('userName');
+
+  if (user) {
+    currentUser = user;
+    loginBtn.style.display = 'none';
+    userInfoDiv.style.display = 'flex';
+    userNameSpan.textContent = `欢迎, ${user.displayName || user.email}`;
+    // 可选：禁用“创建/编辑”等功能，直到数据加载完毕
+  } else {
+    currentUser = null;
+    loginBtn.style.display = 'block';
+    userInfoDiv.style.display = 'none';
+  }
 }
 
 function persistAll() {
@@ -723,12 +754,48 @@ function initSetSelector() {
     setSelect.value = currentSetId;
 }
 async function initializeApp() {
-    initSetSelector();
-    bindEvents();
-    setupPWAInstall();
-    await switchCardSet(currentSetId);
-    registerServiceWorker();
-    navigator.serviceWorker.ready.then(async () => { if (await requestNotificationPermission()) { setupDailyReminder(); scheduleSessionReminders(); } });
+  // 1. 绑定UI事件 (除了登录)
+  initSetSelector();
+  bindEvents(); // 确保这个函数不包含登录按钮的绑定
+  setupPWAInstall();
+
+  // 2. 绑定登录/登出按钮事件
+  document.getElementById('loginBtn').addEventListener('click', firebase.signInWithGoogle);
+  document.getElementById('logoutBtn').addEventListener('click', firebase.signOut);
+
+  // 3. 【核心】监听认证状态变化
+  firebase.onAuthStateChanged(async (user) => {
+    updateAuthUI(user);
+
+    if (user) {
+      // --- 用户登录后的逻辑 ---
+      console.log(`用户 ${user.uid} 已登录`);
+      
+      // a. 触发数据迁移 (只会执行一次)
+      await migrateLocalDataToFirestore(user.uid);
+      
+      // b. 【重要】改造数据加载逻辑，使其从 Firestore 读取
+      // 我们将在下一步替换 switchCardSet
+      showToast('已登录，正在从云端同步数据...');
+      // await switchCardSetFromFirestore(currentSetId); 
+      console.log("下一步：改造数据加载逻辑以使用 Firestore。");
+
+    } else {
+      // --- 用户未登录或登出后的逻辑 ---
+      console.log("用户未登录，使用本地模式");
+      // 保持原样，从 localStorage 加载数据
+      await switchCardSet(currentSetId);
+    }
+  });
+
+  // 4. PWA相关初始化
+  registerServiceWorker();
+  navigator.serviceWorker.ready.then(async () => {
+    if (await requestNotificationPermission()) {
+      setupDailyReminder();
+      // scheduleSessionReminders();
+    }
+  });
 }
 window.app = {
   editCard: editCard
