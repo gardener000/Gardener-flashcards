@@ -32,6 +32,10 @@ export const cardSetsConfig = {
   },
   
   //cn
+  "cnphy-1":{
+    name:"计算机网络：物理层(上)",
+    path:"/data/cn_physical_layer_part1.js"
+  },
   "cnMAC-1":{
     name:"计算机网络：MAC层（上）",
     path:"/data/mac-layer-part1.js"
