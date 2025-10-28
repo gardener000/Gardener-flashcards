@@ -45,15 +45,19 @@ export const cardSetsConfig = {
     path:"/data/cn_mac_layer_part2_new.js"
   },
   //os
-  "os-chap5":{
-    name:"操作系统：CPU调度算法",
-    path:"/data/cpu_scheduling.js"
-  },
-  
   "threads": {
     name: "操作系统：线程",
     path: "/data/threads.js"
   },
+  "os-chap5":{
+    name:"操作系统：CPU调度算法",
+    path:"/data/cpu_scheduling.js"
+  },
+  "oschap8":{
+    name:"操作系统：主存管理",
+    path:"/data/os_main_mem.js"
+  },
+  
   //na
   "na1":{
     name:"数值分析：线性系统迭代法 (上)",
