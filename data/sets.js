@@ -67,6 +67,10 @@ export const cardSetsConfig = {
     name:"数值分析：迭代法",
     path:"/data/na2.js"
   },
+  "na3-0":{
+    name:"数值分析：插值与多项式逼近",
+    path:"/data/na3.js"
+  },
   //aai
   "aai":{
     name:"aai_chap2：微处理器体系结构",
