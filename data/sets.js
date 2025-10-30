@@ -95,6 +95,10 @@ export const cardSetsConfig = {
   "aai4-4":{
     name:"aai_chap4-4：杂项数据传送指令",
     path:"/data/aai_chap4_4.js"
+  },
+  "aai4-5&6":{
+    name:"aai_chap4-5&6：汇编器细节与内存模型",
+    path:"/data/aai_chap4_5&6.js"
   }
 
 
