@@ -88,9 +88,13 @@ export const cardSetsConfig = {
     name:"aai_chap4-1：数据移动与编码",
     path:"/data/assembly_chap4.js"
   },
-  "aai4-2":{
-    name:"aai_chap4-2：特殊数据传送指令",
-    path:"/data/aai_chap4_2.js"
+  "aai4-2&3":{
+    name:"aai_chap4-2&3：特殊数据传送指令",
+    path:"/data/aai_chap4_2&3.js"
+  },
+  "aai4-4":{
+    name:"aai_chap4-4：杂项数据传送指令",
+    path:"/data/aai_chap4_4.js"
   }
 
 
