@@ -44,6 +44,10 @@ export const cardSetsConfig = {
     name:"计算机网络：MAC层（下）",
     path:"/data/cn_mac_layer_part2_new.js"
   },
+  "cnNet-1":{
+    name:"计算机网络：网络层（上）",
+    path:"/data/cn_network_layer.js"
+  },
   //os
   "threads": {
     name: "操作系统：线程",
