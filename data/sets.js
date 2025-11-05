@@ -61,6 +61,10 @@ export const cardSetsConfig = {
     name:"操作系统：主存管理",
     path:"/data/os_main_mem.js"
   },
+  "oschap9-1":{
+    name:"操作系统：虚拟内存（上）",
+    path:"/data/os_virtual_mem.js"
+  },
   
   //na
   "na1":{
