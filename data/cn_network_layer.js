@@ -1,6 +1,6 @@
 // data/cn_network_layer.js
 export default {
-  name: "计算机网络：网络层（上）",
+  name: "计算机网络：网络层（中）—— IPv4",
   data: [
     {front:"网络层的两大核心功能是什么？  forwarding vs routing",back:`<dl><dt>转发 (Forwarding)</dt><dd>微观层面，在<mark>单个路由器</mark>内完成。<br>根据转发表 (Forwarding Table) 将数据包从输入端口快速送到正确的输出端口。</dd><dt>路由 (Routing)</dt><dd>宏观层面，涉及<mark>整个网络</mark>。<br>通过路由算法 (Routing Protocols) 确定数据包从源到目标的最佳路径，并生成转发表。</dd><dt>关系</dt><dd><mark>路由</mark>是决策者，<mark>转发</mark>是执行者。</dd></dl>`},
     {front:"网络层提供的两种服务模型 🌐",back:`<dl><dt>无连接服务 (Connectionless)</dt><dd>也称<mark>数据报网络 (Datagram Network)</mark>。<br>每个包独立选路，无需建立连接。<br><b>优点:</b> 灵活、高效、容错性好 (路由器故障可绕行)。<br><b>缺点:</b> 不保证按序、不保证送达。<br><b>代表:</b> <mark>Internet</mark>。</dd><dt>面向连接服务 (Connection-Oriented)</dt><dd>也称<mark>虚电路网络 (Virtual Circuit)</mark>。<br>通信前先建立一条路径 (VC)，所有包沿此路径传输。<br><b>优点:</b> 服务质量 (QoS) 有保障。<br><b>缺点:</b> 开销大，路径故障则连接中断。</dd></dl>`},

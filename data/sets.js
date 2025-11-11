@@ -48,8 +48,8 @@ export const cardSetsConfig = {
     name:"计算机网络：网络层（上）",
     path:"/data/cn_network_layer.js"
   },
-  "cnNet-2":{
-    name:"计算机网络：网络层（下）",
+  "cnNet-2-0":{
+    name:"计算机网络：网络层（中）—— IPv4",
     path:"/data/cn_network_layer_1.js"
   },
   //os
