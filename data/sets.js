@@ -52,6 +52,10 @@ export const cardSetsConfig = {
     name:"计算机网络：网络层（中）—— IPv4",
     path:"/data/cn_network_layer_1.js"
   },
+  "cnNet-3":{
+    name:"计算机网络：网络层（下）",
+    path:"/data/cn_network_layer_3.js"
+  },
   //os
   "threads": {
     name: "操作系统：线程",
