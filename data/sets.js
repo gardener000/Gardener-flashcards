@@ -25,6 +25,10 @@ export const cardSetsConfig = {
     name:"JavaW7作业：异常处理",
     path:"/data/java-w7-hw.js"
   },
+  "javaw9hw":{
+    name:"JavaW9作业：线程",
+    path:"/data/java-w9-hw.js"
+  },
   //toc
   "toc":{
     name:"toc_lec3:DFA&NFA",
