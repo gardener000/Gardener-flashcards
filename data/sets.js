@@ -34,6 +34,10 @@ export const cardSetsConfig = {
     name:"toc_lec3:DFA&NFA",
     path:"/data/toc_lec3.js"
   },
+  "CET-6-1":{
+    name:"六级口语：核心技巧与模板",
+    path:"/data/cet6_speaking.js"
+  },
   
   //cn
   "cnphy-1":{
