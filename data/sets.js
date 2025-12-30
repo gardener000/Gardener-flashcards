@@ -133,6 +133,10 @@ export const cardSetsConfig = {
   "review-cn-2":{
     name:"计网复习-chap2",
     path:"/data/cn_ch2.js"
+  },
+  "review-cn-3":{
+    name:"计网复习-chap3",
+    path:"/data/cn_ch3.js"
   }
 
 
