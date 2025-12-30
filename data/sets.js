@@ -124,9 +124,15 @@ export const cardSetsConfig = {
     name:"aai_chap4-5&6：汇编器细节与内存模型",
     path:"/data/aai_chap4_5&6.js"
   },
-  "review":{
+  //review
+  //cn
+  "review-cn-1":{
     name:"计网复习-chap1",
     path:"/data/cn_ch1.js"
+  },
+  "review-cn-2":{
+    name:"计网复习-chap2",
+    path:"/data/cn_ch2.js"
   }
 
 
